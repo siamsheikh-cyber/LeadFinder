@@ -252,6 +252,9 @@ export async function POST(request) {
       success: true,
       city: rawCity,
       searchQuery: searchQuery,
+      totalScraped: listings.length,
+      noWebsiteCount: resultsWithoutWebsite.length,
+      filteredCount: resultsWithoutWebsite.length,
       totalScanned: itemsToCheck.length,
       totalWithoutWebsite: resultsWithoutWebsite.length,
       data: resultsWithoutWebsite

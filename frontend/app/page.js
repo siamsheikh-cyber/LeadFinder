@@ -133,6 +133,11 @@ export default function Dashboard() {
   const [cityInput, setCityInput] = useState("food trucks in Austin, TX");
   const [activeCity, setActiveCity] = useState("Austin, TX");
   const [results, setResults] = useState(INITIAL_VERIFIED_RESULTS);
+  const [stats, setStats] = useState({
+    totalScraped: 24,
+    noWebsiteCount: 4,
+    hasCompleted: true,
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
   const [filterText, setFilterText] = useState("");
@@ -186,18 +191,23 @@ export default function Dashboard() {
         setActiveCity(cityInput.trim());
         const realData = resData.data || [];
         setResults(realData);
+        setStats({
+          totalScraped: resData.totalScraped ?? resData.totalScanned ?? realData.length,
+          noWebsiteCount: resData.noWebsiteCount ?? resData.filteredCount ?? realData.length,
+          hasCompleted: true,
+        });
 
         if (realData.length > 0) {
           setAlertNotice({
             type: "success",
             title: "Live Scrape Complete!",
-            message: `Found and verified ${realData.length} real restaurants without websites (out of ${resData.totalScanned} scanned on Google Maps).`,
+            message: `Scraped ${resData.totalScraped ?? resData.totalScanned} total restaurants, found ${resData.noWebsiteCount ?? realData.length} restaurants without a website.`,
           });
         } else {
           setAlertNotice({
             type: "info",
             title: "Scrape Complete (0 Matches)",
-            message: `Inspected ${resData.totalScanned} places for "${cityInput}", but all currently have official websites attached. Try searching "food trucks in ${cityInput}" or "tacos in ${cityInput}".`,
+            message: `Scraped ${resData.totalScraped ?? resData.totalScanned} places for "${cityInput}", but all currently have official websites attached. Try searching "food trucks in ${cityInput}" or "tacos in ${cityInput}".`,
           });
         }
       } else {
@@ -476,6 +486,59 @@ export default function Dashboard() {
             >
               ✕
             </button>
+          </div>
+        )}
+
+        {/* Scraper Stats Summary Badges (Displayed above data table) */}
+        {stats.hasCompleted && (
+          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 sm:p-6 backdrop-blur-xl shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-5 relative overflow-hidden">
+            <div className={`absolute -right-10 -bottom-10 w-48 h-48 rounded-full ${theme.accentBg} blur-3xl pointer-events-none`} />
+
+            <div className="flex items-start sm:items-center space-x-4">
+              <div className={`w-12 h-12 rounded-xl ${theme.avatarBg} border flex items-center justify-center shrink-0 shadow-inner`}>
+                <svg className={`w-6 h-6 ${theme.accentText}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs uppercase tracking-wider font-semibold text-slate-400">
+                    Live Scraper Metrics
+                  </span>
+                  <span className={`inline-block w-2 h-2 rounded-full ${theme.dot} animate-pulse`} />
+                </div>
+                <p className="text-base sm:text-lg font-bold text-white mt-0.5">
+                  Scraped <span className="text-white underline decoration-slate-600 decoration-2">{stats.totalScraped}</span> total restaurants, found <span className={`${theme.accentText} underline decoration-2`}>{stats.noWebsiteCount}</span> restaurants without a website.
+                </p>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Target location: <strong className="text-slate-300">{activeCity}</strong> • Confirmed missing website link
+                </p>
+              </div>
+            </div>
+
+            {/* Stat Badges / Numbers */}
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="px-3.5 py-2 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center gap-2.5">
+                <span className="text-xs text-slate-400">Total Scraped</span>
+                <span className="text-base font-extrabold text-white bg-slate-800/90 px-2.5 py-0.5 rounded-lg border border-slate-700">
+                  {stats.totalScraped}
+                </span>
+              </div>
+
+              <div className={`px-3.5 py-2 rounded-xl ${theme.accentBg} ${theme.accentBorder} border flex items-center gap-2.5`}>
+                <span className={`text-xs font-medium ${theme.accentLight}`}>No Website</span>
+                <span className={`text-base font-extrabold ${theme.accentText} bg-slate-950 px-2.5 py-0.5 rounded-lg border ${theme.accentBorder}`}>
+                  {stats.noWebsiteCount}
+                </span>
+              </div>
+
+              <div className="px-3.5 py-2 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center gap-2.5">
+                <span className="text-xs text-rose-300 font-medium">Unclaimed %</span>
+                <span className="text-base font-extrabold text-rose-400 bg-slate-950 px-2.5 py-0.5 rounded-lg border border-rose-500/20">
+                  {stats.totalScraped > 0 ? Math.round((stats.noWebsiteCount / stats.totalScraped) * 100) : 0}%
+                </span>
+              </div>
+            </div>
           </div>
         )}
 
