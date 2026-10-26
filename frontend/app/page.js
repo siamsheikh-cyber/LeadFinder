@@ -78,7 +78,62 @@ const THEMES = {
   },
 };
 
-// Initial verified live examples
+/**
+ * Helper to identify if a URL is a social media / third-party platform
+ * rather than an independent business website.
+ */
+export function isSocialMediaUrl(url) {
+  if (!url || typeof url !== "string") return false;
+  try {
+    const raw = url.trim();
+    const parsed = new URL(raw.startsWith("http") ? raw : `https://${raw}`);
+    const hostname = parsed.hostname.toLowerCase().replace(/^www\./, "");
+    const socialDomains = [
+      "facebook.com",
+      "fb.com",
+      "m.facebook.com",
+      "instagram.com",
+      "instagr.am",
+      "yelp.com",
+      "twitter.com",
+      "x.com",
+      "tiktok.com",
+      "wa.me",
+      "whatsapp.com",
+      "api.whatsapp.com",
+      "linkedin.com",
+      "youtube.com",
+      "pinterest.com",
+      "threads.net",
+      "linktr.ee",
+    ];
+    return socialDomains.some(
+      (domain) => hostname === domain || hostname.endsWith(`.${domain}`)
+    );
+  } catch (e) {
+    return /facebook\.com|fb\.com|instagram\.com|yelp\.com|twitter\.com|x\.com|tiktok\.com|wa\.me|whatsapp\.com|linkedin\.com|linktr\.ee/i.test(
+      url
+    );
+  }
+}
+
+/**
+ * Helper to get a human-friendly platform label for social URLs
+ */
+export function getSocialPlatformLabel(url) {
+  if (!url) return "Social Link";
+  const lower = url.toLowerCase();
+  if (lower.includes("instagram.com") || lower.includes("instagr.am")) return "Instagram";
+  if (lower.includes("facebook.com") || lower.includes("fb.com")) return "Facebook";
+  if (lower.includes("yelp.com")) return "Yelp";
+  if (lower.includes("tiktok.com")) return "TikTok";
+  if (lower.includes("twitter.com") || lower.includes("x.com")) return "X / Twitter";
+  if (lower.includes("wa.me") || lower.includes("whatsapp.com")) return "WhatsApp";
+  if (lower.includes("linktr.ee")) return "Linktree";
+  return "Social Page";
+}
+
+// Initial verified live examples illustrating all lead categories
 const INITIAL_VERIFIED_RESULTS = [
   {
     id: 1,
@@ -89,6 +144,10 @@ const INITIAL_VERIFIED_RESULTS = [
     rating: "4.9",
     reviews: "253",
     hasWebsite: false,
+    websiteUrl: null,
+    socialLink: "https://www.instagram.com/cheftruckatx",
+    isUnclaimed: true,
+    profileStatus: "Unclaimed",
     mapsUrl: "https://www.google.com/maps/place/CHEF+TRUCK/@30.2571689,-97.7239049,17z/",
   },
   {
@@ -100,6 +159,10 @@ const INITIAL_VERIFIED_RESULTS = [
     rating: "4.8",
     reviews: "68",
     hasWebsite: false,
+    websiteUrl: null,
+    socialLink: "https://www.facebook.com/santopatiotacos",
+    isUnclaimed: false,
+    profileStatus: "Claimed",
     mapsUrl: "https://www.google.com/maps/place/Santo+Patio+Taco+Trailer/@30.2624483,-97.6965058,17z/",
   },
   {
@@ -111,6 +174,10 @@ const INITIAL_VERIFIED_RESULTS = [
     rating: "4.5",
     reviews: "31",
     hasWebsite: false,
+    websiteUrl: null,
+    socialLink: "https://www.yelp.com/biz/polvos-austin-3",
+    isUnclaimed: true,
+    profileStatus: "Unclaimed",
     mapsUrl: "https://www.google.com/maps/place/Polvos+Truck/@30.2155192,-97.7625033,17z/",
   },
   {
@@ -122,9 +189,74 @@ const INITIAL_VERIFIED_RESULTS = [
     rating: "4.6",
     reviews: "84",
     hasWebsite: false,
+    websiteUrl: null,
+    socialLink: null,
+    isUnclaimed: true,
+    profileStatus: "Unclaimed",
     mapsUrl: "https://www.google.com/maps/place/Webberville+Food+Truck+Park/@30.2629914,-97.7137803,17z/",
   },
+  {
+    id: 5,
+    name: "Cuantos Tacos",
+    category: "Taco Truck · Mexico City Style",
+    address: "1108 E 12th St, Austin, TX 78702",
+    phone: "+1 512-856-4277",
+    rating: "4.9",
+    reviews: "412",
+    hasWebsite: true,
+    websiteUrl: "https://cuantostacos.com",
+    socialLink: null,
+    isUnclaimed: true,
+    profileStatus: "Unclaimed",
+    mapsUrl: "https://www.google.com/maps/place/Cuantos+Tacos/@30.274152,-97.728913,17z/",
+  },
+  {
+    id: 6,
+    name: "Veracruz All Natural",
+    category: "Taco Restaurant · Tex-Mex",
+    address: "2505 E 6th St, Austin, TX 78702",
+    phone: "+1 512-394-5850",
+    rating: "4.7",
+    reviews: "1,290",
+    hasWebsite: true,
+    websiteUrl: "https://veracruzallnatural.com",
+    socialLink: null,
+    isUnclaimed: false,
+    profileStatus: "Claimed",
+    mapsUrl: "https://www.google.com/maps/place/Veracruz+All+Natural/@30.25983,-97.71442,17z/",
+  },
 ];
+
+// 1-Click Copy Button with animated visual feedback
+function CopyButton({ text, copyKey, copiedKey, onCopy, title = "Copy", className = "" }) {
+  const isCopied = copiedKey === copyKey;
+
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        onCopy(text, copyKey);
+      }}
+      title={isCopied ? "Copied!" : title}
+      aria-label={isCopied ? "Copied!" : title}
+      className={`inline-flex items-center text-gray-400 hover:text-white cursor-pointer transition-colors p-0.5 rounded focus:outline-none ${className}`}
+    >
+      {isCopied ? (
+        <span className="inline-flex items-center text-emerald-400 text-xs font-medium gap-0.5 animate-in fade-in duration-150">
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+          </svg>
+          <span className="text-[10px] text-emerald-300 font-sans">Copied!</span>
+        </span>
+      ) : (
+        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+        </svg>
+      )}
+    </button>
+  );
+}
 
 export default function Dashboard() {
   const [currentThemeKey, setCurrentThemeKey] = useState("emerald");
@@ -133,15 +265,39 @@ export default function Dashboard() {
   const [cityInput, setCityInput] = useState("food trucks in Austin, TX");
   const [activeCity, setActiveCity] = useState("Austin, TX");
   const [results, setResults] = useState(INITIAL_VERIFIED_RESULTS);
+  const [selectedFilter, setSelectedFilter] = useState("all");
+
   const [stats, setStats] = useState({
-    totalScraped: 24,
+    totalScraped: 30,
     noWebsiteCount: 4,
+    socialOnlyCount: 3,
+    webUnclaimedCount: 1,
+    unclaimedCount: 4,
     hasCompleted: true,
   });
+
   const [isLoading, setIsLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
   const [filterText, setFilterText] = useState("");
   const [alertNotice, setAlertNotice] = useState(null);
+  const [copiedKey, setCopiedKey] = useState(null);
+
+  const handleCopy = (text, key) => {
+    if (!text || text === "N/A") return;
+    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+      navigator.clipboard
+        .writeText(text)
+        .then(() => {
+          setCopiedKey(key);
+          setTimeout(() => {
+            setCopiedKey((prev) => (prev === key ? null : prev));
+          }, 1500);
+        })
+        .catch((err) => {
+          console.error("Clipboard copy failed:", err);
+        });
+    }
+  };
 
   const presetQueries = [
     { label: "Austin Food Trucks", query: "food trucks in Austin, TX" },
@@ -156,8 +312,8 @@ export default function Dashboard() {
     "Navigating to Google Maps search cluster...",
     "Auto-scrolling listings feed (div[role='feed'])...",
     "Opening individual detail panels for exact name, ratings & address...",
-    "Verifying official website link status...",
-    "Filtering out businesses with websites and packaging verified leads...",
+    "Inspecting official website & filtering out social media links (FB, IG, Yelp)...",
+    "Verifying Google Business profile claim status (Claimed vs Unclaimed)...",
   ];
 
   // Real backend scraping call to /api/scrape
@@ -189,25 +345,59 @@ export default function Dashboard() {
 
       if (resData.success) {
         setActiveCity(cityInput.trim());
-        const realData = resData.data || [];
-        setResults(realData);
+        const rawData = resData.data || [];
+
+        // Sanitize leads ensuring social links are strictly classified as No Website
+        const sanitizedLeads = rawData.map((item, idx) => {
+          const rawUrl = item.websiteUrl || item.rawWebsiteUrl || null;
+          const isSocial = item.socialLink ? true : isSocialMediaUrl(rawUrl);
+          const socialUrl = item.socialLink || (isSocial ? rawUrl : null);
+          const hasValidWebsite = !isSocial && Boolean(rawUrl || item.hasWebsite);
+          const validWebsiteUrl = hasValidWebsite ? rawUrl : null;
+          const isUnclaimed = Boolean(item.isUnclaimed || item.profileStatus === "Unclaimed");
+
+          return {
+            ...item,
+            id: item.id || idx + 1,
+            hasWebsite: hasValidWebsite,
+            websiteUrl: validWebsiteUrl,
+            socialLink: socialUrl,
+            isUnclaimed: isUnclaimed,
+            profileStatus: isUnclaimed ? "Unclaimed" : "Claimed",
+          };
+        });
+
+        setResults(sanitizedLeads);
+
+        const noWebCount = sanitizedLeads.filter((r) => !r.hasWebsite).length;
+        const socialCount = sanitizedLeads.filter((r) => !r.hasWebsite && r.socialLink).length;
+        const webUnclaimed = sanitizedLeads.filter(
+          (r) => r.hasWebsite && (r.isUnclaimed || r.profileStatus === "Unclaimed")
+        ).length;
+        const totalUnclaimed = sanitizedLeads.filter(
+          (r) => r.isUnclaimed || r.profileStatus === "Unclaimed"
+        ).length;
+
         setStats({
-          totalScraped: resData.totalScraped ?? resData.totalScanned ?? realData.length,
-          noWebsiteCount: resData.noWebsiteCount ?? resData.filteredCount ?? realData.length,
+          totalScraped: resData.totalScraped ?? resData.totalScanned ?? sanitizedLeads.length,
+          noWebsiteCount: resData.noWebsiteCount ?? noWebCount,
+          socialOnlyCount: resData.socialOnlyCount ?? socialCount,
+          webUnclaimedCount: webUnclaimed,
+          unclaimedCount: resData.unclaimedCount ?? totalUnclaimed,
           hasCompleted: true,
         });
 
-        if (realData.length > 0) {
+        if (sanitizedLeads.length > 0) {
           setAlertNotice({
             type: "success",
             title: "Live Scrape Complete!",
-            message: `Scraped ${resData.totalScraped ?? resData.totalScanned} total restaurants, found ${resData.noWebsiteCount ?? realData.length} restaurants without a website.`,
+            message: `Scraped ${resData.totalScraped ?? resData.totalScanned ?? sanitizedLeads.length} total restaurants. Found ${noWebCount} with No Website (${socialCount} with social profiles only) and ${webUnclaimed} with Website + Unclaimed GMB.`,
           });
         } else {
           setAlertNotice({
             type: "info",
             title: "Scrape Complete (0 Matches)",
-            message: `Scraped ${resData.totalScraped ?? resData.totalScanned} places for "${cityInput}", but all currently have official websites attached. Try searching "food trucks in ${cityInput}" or "tacos in ${cityInput}".`,
+            message: `Scraped ${resData.totalScraped ?? resData.totalScanned} places for "${cityInput}". Try searching "food trucks in ${cityInput}" or "tacos in ${cityInput}".`,
           });
         }
       } else {
@@ -244,6 +434,9 @@ export default function Dashboard() {
       "Full Address",
       "Phone Number",
       "Website Status",
+      "Official Website URL",
+      "Social Media Link",
+      "Profile Status",
       "Google Maps Link",
     ];
 
@@ -254,7 +447,10 @@ export default function Dashboard() {
       `"${(r.category || "").replace(/"/g, '""')}"`,
       `"${(r.address || "").replace(/"/g, '""')}"`,
       `"${r.phone || "N/A"}"`,
-      `"No Website"`,
+      `"${r.hasWebsite ? "Has Website" : "No Website"}"`,
+      `"${(r.hasWebsite ? r.websiteUrl : "") || ""}"`,
+      `"${r.socialLink || ""}"`,
+      `"${r.profileStatus || (r.isUnclaimed ? "Unclaimed" : "Claimed")}"`,
       `"${r.mapsUrl || ""}"`,
     ]);
 
@@ -274,7 +470,7 @@ export default function Dashboard() {
     setAlertNotice({
       type: "success",
       title: "Real CSV Downloaded",
-      message: `Exported ${results.length} verified real leads to CSV format.`,
+      message: `Exported ${results.length} verified real leads to CSV format with separated official website and social media fields.`,
     });
   };
 
@@ -286,13 +482,49 @@ export default function Dashboard() {
     });
   };
 
-  const filteredResults = results.filter(
-    (item) =>
-      item.name.toLowerCase().includes(filterText.toLowerCase()) ||
-      item.phone.toLowerCase().includes(filterText.toLowerCase()) ||
-      (item.category && item.category.toLowerCase().includes(filterText.toLowerCase())) ||
-      (item.address && item.address.toLowerCase().includes(filterText.toLowerCase()))
-  );
+  // Segment / Tab filtering and search query matching
+  const filteredResults = results.filter((item) => {
+    // 1. Tab segment filter
+    if (selectedFilter === "no_website" && item.hasWebsite) return false;
+    if (selectedFilter === "social_only" && (item.hasWebsite || !item.socialLink)) return false;
+    if (
+      selectedFilter === "web_unclaimed" &&
+      (!item.hasWebsite || (!item.isUnclaimed && item.profileStatus !== "Unclaimed"))
+    )
+      return false;
+    if (selectedFilter === "has_website" && !item.hasWebsite) return false;
+    if (selectedFilter === "unclaimed" && !item.isUnclaimed && item.profileStatus !== "Unclaimed")
+      return false;
+    if (selectedFilter === "claimed" && (item.isUnclaimed || item.profileStatus === "Unclaimed"))
+      return false;
+
+    // 2. Free text search filter
+    if (!filterText.trim()) return true;
+    const q = filterText.toLowerCase();
+    return (
+      (item.name && item.name.toLowerCase().includes(q)) ||
+      (item.phone && item.phone.toLowerCase().includes(q)) ||
+      (item.category && item.category.toLowerCase().includes(q)) ||
+      (item.address && item.address.toLowerCase().includes(q)) ||
+      (item.profileStatus && item.profileStatus.toLowerCase().includes(q)) ||
+      (item.socialLink && item.socialLink.toLowerCase().includes(q)) ||
+      (item.websiteUrl && item.websiteUrl.toLowerCase().includes(q))
+    );
+  });
+
+  // Dynamic counts for quick segmentation chips
+  const totalCount = results.length;
+  const noWebCount = results.filter((r) => !r.hasWebsite).length;
+  const socialOnlyCount = results.filter((r) => !r.hasWebsite && r.socialLink).length;
+  const webUnclaimedCount = results.filter(
+    (r) => r.hasWebsite && (r.isUnclaimed || r.profileStatus === "Unclaimed")
+  ).length;
+  const hasWebCount = results.filter((r) => r.hasWebsite).length;
+  const unclaimedCount = results.filter((r) => r.isUnclaimed || r.profileStatus === "Unclaimed").length;
+  const claimedCount = results.filter((r) => !r.isUnclaimed && r.profileStatus !== "Unclaimed").length;
+
+  const unclaimedPercentage =
+    totalCount > 0 ? Math.round((unclaimedCount / totalCount) * 100) : 0;
 
   return (
     <div className="min-h-screen bg-[#080b11] text-slate-100 flex flex-col font-sans transition-colors duration-300">
@@ -317,7 +549,9 @@ export default function Dashboard() {
               <span className="font-bold text-lg bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
                 LeadFinder <span className={theme.accentText}>Maps</span>
               </span>
-              <span className={`hidden sm:inline-block ml-2 px-2 py-0.5 text-[10px] font-semibold tracking-wider uppercase rounded-full ${theme.badgePill}`}>
+              <span
+                className={`hidden sm:inline-block ml-2 px-2 py-0.5 text-[10px] font-semibold tracking-wider uppercase rounded-full ${theme.badgePill}`}
+              >
                 Live Scraper API
               </span>
             </div>
@@ -366,8 +600,10 @@ export default function Dashboard() {
           </h1>
 
           <p className="text-slate-400 text-sm sm:text-base leading-relaxed">
-            Extract verified live restaurants from Google Maps that currently have{" "}
-            <strong className="text-slate-200">no official website</strong>. Extracts exact names, real ratings, review counts, direct phone numbers, and full location addresses.
+            Extract verified live businesses from Google Maps. Accurately separates{" "}
+            <strong className="text-rose-400">No Website</strong> leads (filtering out Facebook, Instagram, & Yelp),
+            highlights <strong className="text-amber-300">Social Media Only</strong> presences, and reveals high-value{" "}
+            <strong className="text-cyan-300">Unclaimed Profiles</strong>.
           </p>
         </div>
 
@@ -454,7 +690,7 @@ export default function Dashboard() {
                 />
               </div>
               <p className="text-xs text-slate-500 text-center">
-                Running real Puppeteer browser engine via <code className="text-slate-400">/api/scrape</code>. Inspecting live Google Maps place details...
+                Running real Puppeteer browser engine via <code className="text-slate-400">/api/scrape</code>. Categorizing custom domains vs social media profiles...
               </p>
             </div>
           )}
@@ -491,11 +727,15 @@ export default function Dashboard() {
 
         {/* Scraper Stats Summary Badges (Displayed above data table) */}
         {stats.hasCompleted && (
-          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 sm:p-6 backdrop-blur-xl shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-5 relative overflow-hidden">
-            <div className={`absolute -right-10 -bottom-10 w-48 h-48 rounded-full ${theme.accentBg} blur-3xl pointer-events-none`} />
+          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 sm:p-6 backdrop-blur-xl shadow-xl flex flex-col lg:flex-row lg:items-center justify-between gap-5 relative overflow-hidden">
+            <div
+              className={`absolute -right-10 -bottom-10 w-48 h-48 rounded-full ${theme.accentBg} blur-3xl pointer-events-none`}
+            />
 
             <div className="flex items-start sm:items-center space-x-4">
-              <div className={`w-12 h-12 rounded-xl ${theme.avatarBg} border flex items-center justify-center shrink-0 shadow-inner`}>
+              <div
+                className={`w-12 h-12 rounded-xl ${theme.avatarBg} border flex items-center justify-center shrink-0 shadow-inner`}
+              >
                 <svg className={`w-6 h-6 ${theme.accentText}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
@@ -508,34 +748,88 @@ export default function Dashboard() {
                   <span className={`inline-block w-2 h-2 rounded-full ${theme.dot} animate-pulse`} />
                 </div>
                 <p className="text-base sm:text-lg font-bold text-white mt-0.5">
-                  Scraped <span className="text-white underline decoration-slate-600 decoration-2">{stats.totalScraped}</span> total restaurants, found <span className={`${theme.accentText} underline decoration-2`}>{stats.noWebsiteCount}</span> restaurants without a website.
+                  <span className="text-rose-400 underline decoration-rose-500/40 decoration-2">
+                    {noWebCount} No Website
+                  </span>{" "}
+                  leads found in <strong className="text-slate-200">{activeCity}</strong>
+                  {socialOnlyCount > 0 && (
+                    <span className="text-xs text-amber-300 font-normal ml-2">
+                      ({socialOnlyCount} have social media only)
+                    </span>
+                  )}
                 </p>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  Target location: <strong className="text-slate-300">{activeCity}</strong> • Confirmed missing website link
+                  Social links (Facebook, IG, Yelp) filtered to No Website •{" "}
+                  <strong className="text-cyan-300">{webUnclaimedCount} Web + Unclaimed GMB</strong> •{" "}
+                  <strong className="text-orange-400">{unclaimedCount} Unclaimed Total</strong>
                 </p>
               </div>
             </div>
 
-            {/* Stat Badges / Numbers */}
-            <div className="flex items-center gap-3 flex-wrap">
-              <div className="px-3.5 py-2 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center gap-2.5">
-                <span className="text-xs text-slate-400">Total Scraped</span>
-                <span className="text-base font-extrabold text-white bg-slate-800/90 px-2.5 py-0.5 rounded-lg border border-slate-700">
-                  {stats.totalScraped}
+            {/* Stat Badges / Metrics Cards */}
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <div
+                onClick={() => setSelectedFilter("all")}
+                className={`px-3 py-2 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center gap-2 cursor-pointer hover:border-slate-700 transition-colors ${
+                  selectedFilter === "all" ? "ring-1 ring-slate-400" : ""
+                }`}
+                title="View all leads"
+              >
+                <span className="text-xs text-slate-400">Total</span>
+                <span className="text-sm font-extrabold text-white bg-slate-800/90 px-2 py-0.5 rounded-lg border border-slate-700">
+                  {totalCount}
                 </span>
               </div>
 
-              <div className={`px-3.5 py-2 rounded-xl ${theme.accentBg} ${theme.accentBorder} border flex items-center gap-2.5`}>
-                <span className={`text-xs font-medium ${theme.accentLight}`}>No Website</span>
-                <span className={`text-base font-extrabold ${theme.accentText} bg-slate-950 px-2.5 py-0.5 rounded-lg border ${theme.accentBorder}`}>
-                  {stats.noWebsiteCount}
+              <div
+                onClick={() => setSelectedFilter("no_website")}
+                className={`px-3 py-2 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center gap-2 cursor-pointer hover:bg-rose-500/20 transition-colors ${
+                  selectedFilter === "no_website" ? "ring-1 ring-rose-400" : ""
+                }`}
+                title="View leads without a valid website (includes social-only pages)"
+              >
+                <span className="text-xs font-medium text-rose-300">No Website</span>
+                <span className="text-sm font-extrabold text-rose-300 bg-slate-950 px-2 py-0.5 rounded-lg border border-rose-500/30">
+                  {noWebCount}
                 </span>
               </div>
 
-              <div className="px-3.5 py-2 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center gap-2.5">
-                <span className="text-xs text-rose-300 font-medium">Unclaimed %</span>
-                <span className="text-base font-extrabold text-rose-400 bg-slate-950 px-2.5 py-0.5 rounded-lg border border-rose-500/20">
-                  {stats.totalScraped > 0 ? Math.round((stats.noWebsiteCount / stats.totalScraped) * 100) : 0}%
+              <div
+                onClick={() => setSelectedFilter("social_only")}
+                className={`px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center gap-2 cursor-pointer hover:bg-amber-500/20 transition-colors ${
+                  selectedFilter === "social_only" ? "ring-1 ring-amber-400" : ""
+                }`}
+                title="View leads with social media links (Instagram, Facebook, Yelp) instead of a website"
+              >
+                <span className="text-xs font-medium text-amber-300">📱 Social Only</span>
+                <span className="text-sm font-extrabold text-amber-300 bg-slate-950 px-2 py-0.5 rounded-lg border border-amber-500/30">
+                  {socialOnlyCount}
+                </span>
+              </div>
+
+              <div
+                onClick={() => setSelectedFilter("web_unclaimed")}
+                className={`px-3 py-2 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center gap-2 cursor-pointer hover:bg-cyan-500/20 transition-colors ${
+                  selectedFilter === "web_unclaimed" ? "ring-1 ring-cyan-400" : ""
+                }`}
+                title="View leads that have an official website, but their Google Business Profile is Unclaimed"
+              >
+                <span className="text-xs font-medium text-cyan-300">⚡ Web + Unclaimed</span>
+                <span className="text-sm font-extrabold text-cyan-300 bg-slate-950 px-2 py-0.5 rounded-lg border border-cyan-500/30">
+                  {webUnclaimedCount}
+                </span>
+              </div>
+
+              <div
+                onClick={() => setSelectedFilter("unclaimed")}
+                className={`px-3 py-2 rounded-xl bg-orange-500/10 border border-orange-500/30 flex items-center gap-2 cursor-pointer hover:bg-orange-500/20 transition-colors ${
+                  selectedFilter === "unclaimed" ? "ring-1 ring-orange-400" : ""
+                }`}
+                title={`${unclaimedCount} of ${totalCount} identified leads are unclaimed`}
+              >
+                <span className="text-xs text-orange-300 font-medium">Unclaimed %</span>
+                <span className="text-sm font-extrabold text-orange-400 bg-slate-950 px-2 py-0.5 rounded-lg border border-orange-500/20">
+                  {unclaimedPercentage}%
                 </span>
               </div>
             </div>
@@ -554,11 +848,11 @@ export default function Dashboard() {
                 <span
                   className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${theme.accentBg} ${theme.accentLight} border ${theme.accentBorder}`}
                 >
-                  {results.length} found
+                  {filteredResults.length} shown ({totalCount} total)
                 </span>
               </div>
               <p className="text-xs text-slate-400 mt-1">
-                Verified live Google Maps restaurants with confirmed absence of official website
+                Verified live Google Maps restaurants • Social links (FB, IG, Yelp) mapped to No Website
               </p>
             </div>
 
@@ -588,22 +882,100 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Table filter input */}
-          <div className="flex items-center justify-between gap-4">
-            <div className="relative w-full max-w-xs">
+          {/* Interactive Filter Pills & Search bar */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            {/* Filter buttons */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              <button
+                onClick={() => setSelectedFilter("all")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  selectedFilter === "all"
+                    ? "bg-slate-200 text-slate-900 shadow font-semibold"
+                    : "bg-slate-950/60 text-slate-400 hover:text-white border border-slate-800"
+                }`}
+              >
+                All Leads ({totalCount})
+              </button>
+
+              <button
+                onClick={() => setSelectedFilter("no_website")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  selectedFilter === "no_website"
+                    ? "bg-rose-500 text-white shadow font-semibold"
+                    : "bg-rose-500/10 text-rose-300 hover:bg-rose-500/20 border border-rose-500/30"
+                }`}
+              >
+                No Website ({noWebCount})
+              </button>
+
+              <button
+                onClick={() => setSelectedFilter("social_only")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  selectedFilter === "social_only"
+                    ? "bg-amber-500 text-slate-950 shadow font-semibold"
+                    : "bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 border border-amber-500/30"
+                }`}
+              >
+                📱 Social Media Only ({socialOnlyCount})
+              </button>
+
+              <button
+                onClick={() => setSelectedFilter("web_unclaimed")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  selectedFilter === "web_unclaimed"
+                    ? "bg-cyan-500 text-slate-950 shadow font-semibold"
+                    : "bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/20 border border-cyan-500/30"
+                }`}
+              >
+                ⚡ Website + Unclaimed ({webUnclaimedCount})
+              </button>
+
+              <button
+                onClick={() => setSelectedFilter("has_website")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  selectedFilter === "has_website"
+                    ? "bg-emerald-500 text-white shadow font-semibold"
+                    : "bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 border border-emerald-500/30"
+                }`}
+              >
+                Has Website ({hasWebCount})
+              </button>
+
+              <button
+                onClick={() => setSelectedFilter("unclaimed")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  selectedFilter === "unclaimed"
+                    ? "bg-orange-500 text-white shadow font-semibold"
+                    : "bg-orange-500/10 text-orange-300 hover:bg-orange-500/20 border border-orange-500/30"
+                }`}
+              >
+                All Unclaimed ({unclaimedCount})
+              </button>
+
+              <button
+                onClick={() => setSelectedFilter("claimed")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  selectedFilter === "claimed"
+                    ? "bg-slate-700 text-white shadow font-semibold"
+                    : "bg-slate-950/60 text-slate-400 hover:text-white border border-slate-800"
+                }`}
+              >
+                Claimed ({claimedCount})
+              </button>
+            </div>
+
+            {/* Table filter input */}
+            <div className="relative w-full lg:w-72">
               <input
                 type="text"
-                placeholder="Filter results by name, address, or phone..."
+                placeholder="Filter by name, phone, address..."
                 value={filterText}
                 onChange={(e) => setFilterText(e.target.value)}
-                className={`w-full pl-9 pr-3 py-2 bg-slate-950/70 border border-slate-800 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 ${theme.ring}`}
+                className={`w-full pl-9 pr-3 py-1.5 bg-slate-950/70 border border-slate-800 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 ${theme.ring}`}
               />
-              <svg className="w-4 h-4 absolute left-3 top-2.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-4 h-4 absolute left-3 top-2 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
-            </div>
-            <div className="text-xs text-slate-500 hidden sm:block">
-              Showing {filteredResults.length} of {results.length} verified listings
             </div>
           </div>
 
@@ -615,92 +987,195 @@ export default function Dashboard() {
                   <th scope="col" className="px-5 py-3.5">Restaurant & Location</th>
                   <th scope="col" className="px-5 py-3.5">Phone Number</th>
                   <th scope="col" className="px-5 py-3.5">Website Status</th>
+                  <th scope="col" className="px-5 py-3.5">Profile Status</th>
                   <th scope="col" className="px-5 py-3.5 text-right">Google Maps Link</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60 font-normal">
                 {filteredResults.length > 0 ? (
-                  filteredResults.map((restaurant) => (
-                    <tr
-                      key={restaurant.id || restaurant.mapsUrl}
-                      className="hover:bg-slate-900/60 transition-colors group"
-                    >
-                      {/* Name, Category, Rating & Address */}
-                      <td className="px-5 py-4 whitespace-nowrap">
-                        <div className="flex items-start space-x-3">
-                          <div
-                            className={`w-9 h-9 rounded-lg ${theme.avatarBg} border flex items-center justify-center font-bold text-sm shrink-0 mt-0.5`}
-                          >
-                            {(restaurant.name || "R").charAt(0)}
-                          </div>
-                          <div className="max-w-sm">
-                            <div className={`font-semibold text-white ${theme.hoverRow} transition-colors`}>
-                              {restaurant.name}
+                  filteredResults.map((restaurant) => {
+                    const restaurantKey = restaurant.id || restaurant.mapsUrl || restaurant.name;
+
+                    return (
+                      <tr
+                        key={restaurant.id || restaurant.mapsUrl}
+                        className="hover:bg-slate-900/60 transition-colors group"
+                      >
+                        {/* Name, Category, Rating & Address */}
+                        <td className="px-5 py-4 whitespace-nowrap">
+                          <div className="flex items-start space-x-3">
+                            <div
+                              className={`w-9 h-9 rounded-lg ${theme.avatarBg} border flex items-center justify-center font-bold text-sm shrink-0 mt-0.5`}
+                            >
+                              {(restaurant.name || "R").charAt(0)}
                             </div>
-                            <div className="text-xs text-slate-400 flex items-center gap-2 mt-0.5">
-                              <span>{restaurant.category}</span>
-                              <span>•</span>
-                              <span className="text-amber-400 flex items-center font-medium">
-                                ★ {restaurant.rating} ({restaurant.reviews} reviews)
-                              </span>
-                            </div>
-                            {restaurant.address && restaurant.address !== "N/A" && (
-                              <div className="text-[11px] text-slate-400 truncate max-w-xs mt-0.5 flex items-center gap-1">
-                                <span className="opacity-70">📍</span>
-                                <span>{restaurant.address}</span>
+                            <div className="max-w-sm">
+                              <div className="flex items-center gap-1.5">
+                                <span className={`font-semibold text-white ${theme.hoverRow} transition-colors`}>
+                                  {restaurant.name}
+                                </span>
+                                <CopyButton
+                                  text={restaurant.name}
+                                  copyKey={`${restaurantKey}-name`}
+                                  copiedKey={copiedKey}
+                                  onCopy={handleCopy}
+                                  title="Copy restaurant name"
+                                  className="text-gray-400 hover:text-white cursor-pointer ml-1.5"
+                                />
                               </div>
-                            )}
+                              <div className="text-xs text-slate-400 flex items-center gap-2 mt-0.5">
+                                <span>{restaurant.category}</span>
+                                <span>•</span>
+                                <span className="text-amber-400 flex items-center font-medium">
+                                  ★ {restaurant.rating} ({restaurant.reviews} reviews)
+                                </span>
+                              </div>
+                              {restaurant.address && restaurant.address !== "N/A" && (
+                                <div className="text-[11px] text-slate-400 truncate max-w-xs mt-0.5 flex items-center gap-1">
+                                  <span className="opacity-70">📍</span>
+                                  <span>{restaurant.address}</span>
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      </td>
+                        </td>
 
-                      {/* Phone */}
-                      <td className="px-5 py-4 whitespace-nowrap">
-                        {restaurant.phone && restaurant.phone !== "N/A" ? (
-                          <a
-                            href={`tel:${restaurant.phone.replace(/[^0-9+]/g, "")}`}
-                            className={`inline-flex items-center text-slate-200 hover:${theme.accentText} font-mono text-xs transition-colors`}
-                          >
-                            <svg className="w-3.5 h-3.5 mr-1.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                            </svg>
-                            {restaurant.phone}
-                          </a>
-                        ) : (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-800/80 text-slate-400">
-                            Not Available
-                          </span>
-                        )}
-                      </td>
+                        {/* Phone */}
+                        <td className="px-5 py-4 whitespace-nowrap">
+                          {restaurant.phone && restaurant.phone !== "N/A" ? (
+                            <div className="inline-flex items-center">
+                              <a
+                                href={`tel:${restaurant.phone.replace(/[^0-9+]/g, "")}`}
+                                className={`inline-flex items-center text-slate-200 hover:${theme.accentText} font-mono text-xs transition-colors`}
+                              >
+                                <svg className="w-3.5 h-3.5 mr-1.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                </svg>
+                                {restaurant.phone}
+                              </a>
+                              <CopyButton
+                                text={restaurant.phone}
+                                copyKey={`${restaurantKey}-phone`}
+                                copiedKey={copiedKey}
+                                onCopy={handleCopy}
+                                title="Copy phone number"
+                                className="text-gray-400 hover:text-white cursor-pointer ml-1.5"
+                              />
+                            </div>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-800/80 text-slate-400">
+                              Not Available
+                            </span>
+                          )}
+                        </td>
 
-                      {/* Website Status Badge */}
-                      <td className="px-5 py-4 whitespace-nowrap">
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-300 border border-rose-500/30">
-                          <span className="w-1.5 h-1.5 mr-1.5 rounded-full bg-rose-400 animate-pulse" />
-                          No Website
-                        </span>
-                      </td>
+                        {/* Website Status & Social Media Badge */}
+                        <td className="px-5 py-4 whitespace-nowrap">
+                          {restaurant.hasWebsite ? (
+                            <div>
+                              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
+                                <span className="w-1.5 h-1.5 mr-1.5 rounded-full bg-emerald-400" />
+                                Has Website
+                              </span>
+                              {restaurant.websiteUrl && (
+                                <div className="mt-1">
+                                  <a
+                                    href={restaurant.websiteUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center text-[11px] text-emerald-400/90 hover:text-emerald-300 underline underline-offset-2 transition-colors"
+                                  >
+                                    <span>
+                                      {restaurant.websiteUrl.replace(/^https?:\/\/(www\.)?/, "").replace(/\/.*$/, "")}
+                                    </span>
+                                    <svg className="w-3 h-3 ml-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                    </svg>
+                                  </a>
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div>
+                              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-300 border border-rose-500/30">
+                                <span className="w-1.5 h-1.5 mr-1.5 rounded-full bg-rose-400 animate-pulse" />
+                                No Website
+                              </span>
 
-                      {/* Action / Google Maps Link */}
-                      <td className="px-5 py-4 whitespace-nowrap text-right">
-                        <a
-                          href={restaurant.mapsUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={`inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-medium text-slate-200 bg-slate-800/70 hover:text-white border border-slate-700/60 transition-all ${theme.viewMapBtn}`}
-                        >
-                          <svg className={`w-3.5 h-3.5 mr-1.5 ${theme.accentText} group-hover:text-white`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                          </svg>
-                          View Map
-                        </a>
-                      </td>
-                    </tr>
-                  ))
+                              {/* Separate display for social profile link if detected */}
+                              {restaurant.socialLink ? (
+                                <div className="mt-1">
+                                  <a
+                                    href={restaurant.socialLink}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    title={`Opens direct ${getSocialPlatformLabel(restaurant.socialLink)} profile`}
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-amber-500/10 text-amber-300 border border-amber-500/30 hover:bg-amber-500/20 transition-colors"
+                                  >
+                                    <span>📱 {getSocialPlatformLabel(restaurant.socialLink)} Only</span>
+                                    <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                    </svg>
+                                  </a>
+                                  <span className="block text-[10px] text-slate-500 mt-0.5">
+                                    Social profile only (no custom website)
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="block text-[10px] text-slate-500 mt-0.5">
+                                  No link listed
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </td>
+
+                        {/* Profile Status Badge */}
+                        <td className="px-5 py-4 whitespace-nowrap">
+                          {restaurant.isUnclaimed || restaurant.profileStatus === "Unclaimed" ? (
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-orange-500/10 text-orange-300 border border-orange-500/30 shadow-sm shadow-orange-500/5">
+                              <span className="w-1.5 h-1.5 mr-1.5 rounded-full bg-orange-400 animate-pulse" />
+                              Unclaimed
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
+                              <span className="w-1.5 h-1.5 mr-1.5 rounded-full bg-emerald-400" />
+                              Claimed
+                            </span>
+                          )}
+                        </td>
+
+                        {/* Action / Google Maps Link */}
+                        <td className="px-5 py-4 whitespace-nowrap text-right">
+                          <div className="inline-flex items-center justify-end gap-1.5">
+                            <a
+                              href={restaurant.mapsUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={`inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-medium text-slate-200 bg-slate-800/70 hover:text-white border border-slate-700/60 transition-all ${theme.viewMapBtn}`}
+                            >
+                              <svg className={`w-3.5 h-3.5 mr-1.5 ${theme.accentText} group-hover:text-white`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                              </svg>
+                              View Map
+                            </a>
+                            <CopyButton
+                              text={restaurant.mapsUrl}
+                              copyKey={`${restaurantKey}-map`}
+                              copiedKey={copiedKey}
+                              onCopy={handleCopy}
+                              title="Copy Google Maps link"
+                              className="text-gray-400 hover:text-white cursor-pointer ml-1.5 p-1.5 rounded-lg bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 transition-all"
+                            />
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
                 ) : (
                   <tr>
-                    <td colSpan={4} className="px-6 py-12 text-center text-slate-500 text-sm">
-                      No matching restaurants found matching your criteria.
+                    <td colSpan={5} className="px-6 py-12 text-center text-slate-500 text-sm">
+                      No restaurants found matching your criteria. Try switching filters or search terms.
                     </td>
                   </tr>
                 )}
@@ -711,10 +1186,10 @@ export default function Dashboard() {
           {/* Table Footer info */}
           <div className="flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2 pt-2">
             <div>
-              💡 <strong>Verified Backend Scraper:</strong> Data extracted live from Google Maps detail panels with accurate ratings and direct links.
+              💡 <strong>Social Media Filter Active:</strong> Facebook, Instagram, Yelp, and WhatsApp links are categorized as &quot;No Website&quot; while storing direct social profile links.
             </div>
             <div>
-              Showing {filteredResults.length} leads
+              Showing {filteredResults.length} of {totalCount} leads
             </div>
           </div>
         </div>
